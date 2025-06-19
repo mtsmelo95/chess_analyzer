@@ -9,4 +9,13 @@ engine = chess.engine.SimpleEngine.popen_uci(ENGINE_PATH)
 
 def analyze_position(board):
     info = engine.analyse(board, chess.engine.Limit(time=0.1))
-    return info["score"].white().score(mate_score=10000)
+
+    score = info["score"].white().score(mate_score=10000)
+    best_move = info.get("pv", [None])[0] 
+    depth = info.get("depth", None)
+
+    return {
+        "evaluation": score,
+        "best_move": best_move.uci() if best_move else None,
+        "depth": depth
+    }
