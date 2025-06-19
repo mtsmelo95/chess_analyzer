@@ -13,8 +13,8 @@ def analyze_pgn(pgn_content: str):
 
     for move in game.mainline_moves():
         try:
-            san = board.san(move)  # Gera a notação SAN antes de aplicar o movimento
-            board.push(move)       # Aplica o movimento no tabuleiro
+            san = board.san(move)
+            board.push(move) 
             analysis.append({
                 "move": san,
                 "fen": board.fen()
