@@ -1,53 +1,74 @@
 import chess.pgn
-from io import StringIO
+import io
+from collections import Counter
 from app.utils.stockfish_engine import analyze_position
 
-def analyze_pgn(pgn_content: str):
-    pgn_io = StringIO(pgn_content)
-    game = chess.pgn.read_game(pgn_io)
+def classify_accuracy(diff):
+    if diff is None:
+        return "desconhecido"
+    elif diff == 0:
+        return "perfeito"
+    elif diff <= 20:
+        return "preciso"
+    elif diff <= 50:
+        return "imprecisão"
+    elif diff <= 150:
+        return "erro"
+    else:
+        return "erro grave"
 
+def analyze_pgn(pgn_text: str):
+    game = chess.pgn.read_game(io.StringIO(pgn_text))
+    
     if game is None:
-        return {"error": "PGN inválido ou vazio."}
+        raise ValueError("PGN inválido ou vazio.")
 
-    board = game.board()
+    current_board = game.board()
+    previous_board = game.board()
     analysis = []
+    accuracy_counter = Counter()
 
     for move in game.mainline_moves():
-        try:
-            san = board.san(move)
+        san_move = current_board.san(move)
 
-            # Obtem análise ANTES de aplicar o lance
-            engine_info = analyze_position(board)
+        result = analyze_position(current_board)
+        eval_score = result["score"]
+        best_move = result["best_move"]
+        depth = result["depth"]
 
-            best_move_uci = engine_info["best_move"]
-            best_move_san = None
-            accuracy = None
+        diff = None
+        if best_move:
+            try:
+                test_board = previous_board.copy(stack=False)
+                move_obj = chess.Move.from_uci(best_move)
 
-            if best_move_uci:
-                best_move_obj = chess.Move.from_uci(best_move_uci)
-                if best_move_obj in board.legal_moves:
-                    best_move_san = board.san(best_move_obj)
-                    if best_move_san == san:
-                        accuracy = "preciso"
+                if move_obj in test_board.legal_moves:
+                    test_board.push(move_obj)
+                    best_eval = analyze_position(test_board)["score"]
+                    if eval_score is not None and best_eval is not None:
+                        diff = abs(eval_score - best_eval)
+            except Exception as e:
+                print(f"[WARN] Falha ao simular melhor lance: {e}")
+                diff = None
 
-            board.push(move)  # Aplica o lance depois da análise
+        current_board.push(move)
+        previous_board.push(move)
 
-            analysis.append({
-                "move": san,
-                "fen": board.fen(),
-                "evaluation": engine_info["evaluation"],
-                "best_move": best_move_uci,
-                "depth": engine_info["depth"],
-                "accuracy": accuracy
-            })
+        accuracy = classify_accuracy(diff)
+        accuracy_counter[accuracy] += 1
 
-        except Exception as e:
-            return {"error": f"Erro ao analisar o movimento {move}: {str(e)}"}
+        analysis.append({
+            "move": san_move,
+            "fen": current_board.fen(),
+            "evaluation": eval_score,
+            "best_move": best_move,
+            "depth": depth,
+            "accuracy": accuracy
+        })
 
+    summary = dict(accuracy_counter)
+    
     return {
-        "analysis": analysis,
-        "result": game.headers.get("Result", "N/A"),
-        "event": game.headers.get("Event", "N/A"),
-        "white": game.headers.get("White", "N/A"),
-        "black": game.headers.get("Black", "N/A")
+        "summary": summary,
+        "analysis": analysis
     }
