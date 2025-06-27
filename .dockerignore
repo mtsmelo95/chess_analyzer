@@ -1,0 +1,15 @@
+# Ambiente virtual
+.venv
+venv
+env
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Arquivos de ambiente local
+.env
+
+# Caches de ferramentas
+.pytest_cache
+.mypy_cache
