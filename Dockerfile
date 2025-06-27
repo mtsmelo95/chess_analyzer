@@ -17,9 +17,12 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # Copia todo o código da API para o diretório de trabalho
 COPY . .
 
+# IMPORTANTE: Dá permissão de execução para o binário do Stockfish
+RUN chmod +x ./stockfish
+
 # Expõe a porta em que a API vai rodar. Usaremos 8000 como padrão para a API.
 EXPOSE 8000
 
 # O comando para iniciar o servidor Uvicorn.
-# AJUSTADO PARA SEU PROJETO: usa 'app.main:app' e roda em modo de produção (sem --reload).
+# Ele vai rodar o objeto 'app' do arquivo 'main.py' dentro da pasta 'app'.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
