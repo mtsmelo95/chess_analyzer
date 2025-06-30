@@ -1,10 +1,10 @@
 name: Deploy API to VPS
 
 on:
-   # Gatilho: roda toda vez que há um push na branch 'master'
+   # Gatilho: roda toda vez que há um push na branch 'main'
    push:
       branches:
-         - master
+         - main
 
 jobs:
    deploy:
