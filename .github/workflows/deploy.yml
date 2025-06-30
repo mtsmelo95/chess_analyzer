@@ -1,10 +1,9 @@
 name: Deploy API to VPS
 
 on:
-   # Gatilho: roda toda vez que há um push na branch 'main'
    push:
       branches:
-         - main
+         - master
 
 jobs:
    deploy:
@@ -22,12 +21,15 @@ jobs:
                  cd ~/meu-servidor
 
                  echo " PASSO 1/3: Puxando código mais recente..."
-                 git -C ~/chess-analyzer pull
+                 # CORREÇÃO 1: Caminho da pasta confirmado para 'chess_analyzer'
+                 git -C ~/chess_analyzer pull
 
                  echo " PASSO 2/3: Forçando a reconstrução da imagem sem cache..."
-                 docker compose build --no-cache api-backend
+                 # CORREÇÃO 2: Nome do serviço corrigido para 'api'
+                 docker compose build --no-cache api
 
                  echo " PASSO 3/3: Reiniciando o serviço com a nova imagem..."
-                 docker compose up -d api-backend
+                 # CORREÇÃO 2: Nome do serviço corrigido para 'api'
+                 docker compose up -d api
 
                  echo "✅ Deploy da API finalizado."
